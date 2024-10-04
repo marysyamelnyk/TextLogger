@@ -3,8 +3,8 @@ import os
 from typing import Set, Dict, List, Optional
 import re
 from sqlalchemy.orm import Session
-from text_log.models import ErrorModel
-from text_log.main import Error
+from models import ErrorModel
+from error import Error
 
 
 class Text_Logger_Provider:
@@ -31,6 +31,7 @@ class Text_Logger_Provider:
     
 
     def raise_error(self, error_obj: Error) -> None:
+        
         an_error: str = (
             f"Trace ID: {error_obj.trace_id} "
             f"Name: {error_obj.name} "
