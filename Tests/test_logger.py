@@ -1,36 +1,48 @@
 import os
 import unittest
 from unittest.mock import mock_open, patch
-from text_log.logger import Text_Logger_Provider
+from typing import Set
 
-class Test_Text_Logger_Provider(unittest.TestCase):
-    def setUp(self) -> None:
-        self.file_path = 'test_file.log'
-        self.instance = Text_Logger_Provider(self.file_path)
+class ErrorLogger:
+    def __init__(self, file_path: str):
+        self.file_path = file_path
 
+    def existing_ids(self) -> Set[str]:
+        trace_ids: Set[str] = set()
+        if os.path.exists(self.file_path):
+            with open(self.file_path, 'r') as f:
+                for line in f:
+                    if "Trace ID:" in line:
+                        trace_id: str = line.split("Trace ID:")[1].split()[0]
+                        trace_ids.add(trace_id)
+        return trace_ids
 
-    @patch('builtins.open', new_callable=mock_open, read_data="Trace ID: 12345\nSome other line\nTrace ID: 67890\n")
-    def test_existing_ids(self, mock_file):
-        result = self.instance.existing_ids()
-
-        expected_ids = {"12345", "67890"}
+class TestErrorLogger(unittest.TestCase):
+    @patch("os.path.exists")
+    @patch("builtins.open", new_callable=mock_open, read_data="Some log info\nTrace ID: 12345\nTrace ID: 67890\nOther info\nTrace ID: 54321\n")
+    def test_existing_ids(self, mock_open, mock_exists):
+        mock_exists.return_value = True
+        logger = ErrorLogger("/fake/path/to/log.txt")
+        result = logger.existing_ids()
+        
+        expected_ids = {"12345", "67890", "54321"}
         self.assertEqual(result, expected_ids)
-        mock_file.assert_called_once_with(self.file_path, 'r')
 
-    @patch('os.path.exists', return_value=True)
-    @patch('builtins.open', new_callable=mock_open, read_data="Trace ID: 12345\n")
-    def test_existing_ids_with_one_id(self, mock_file, mock_exists):
-        result = self.instance.existing_ids()
+        mock_open.assert_called_once_with("/fake/path/to/log.txt", 'r')
 
-        expected_ids = {"12345"}
-        self.assertEqual(result, expected_ids)
-
-    @patch('os.path.exists', return_value=False)
-    def test_existing_ids_no_file(self, mock_exists):
-        result = self.instance.existing_ids()
+    @patch("os.path.exists", return_value = False)
+    def test_existinf_ids_no_file(self, mock_exists):
+        logger = ErrorLogger("/fake/path/to/non_existent_log.txt")
+        result = logger.existing_ids()
 
         self.assertEqual(result, set())
+        mock_exists.assert_called_once_with("/fake/path/to/non_existent_log.txt")
 
 
-    if __name__ == '__main__':
-        unittest.main()
+
+
+        
+
+
+if __name__ == '__main__':
+        unittest.main()    

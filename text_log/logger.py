@@ -14,7 +14,7 @@ class Text_Logger_Provider:
         self.db = db
 
         self.logged_ids: Set[str] = self.existing_ids()
-        self.logs_levels: Dict[str, List[str]] = None
+        self.logs_levels: Dict[str, List[str]] = {}
         
         os.makedirs(self.log_folder, exist_ok=True) 
 
